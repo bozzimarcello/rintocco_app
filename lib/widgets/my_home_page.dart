@@ -12,24 +12,26 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final TextEditingController _intervalController = TextEditingController();
-  final TextEditingController _repetitionsController = TextEditingController();
-  final TextEditingController _pauseController = TextEditingController();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   Timer? _timer;
   int _currentRepetition = 0;
   int _remainingTime = 0;
-  String _status = "Inserisci i valori e premi Start";
+  String _status = "Imposta i valori e premi Start";
+
+  double _intervalValue = 30.0; // Valore predefinito per l'intervallo
+  double _repetitionsValue = 5.0; // Valore predefinito per le ripetizioni
+  double _pauseValue = 10.0; // Valore predefinito per la pausa
 
   void _startTimer() {
-    final int interval = int.tryParse(_intervalController.text) ?? 0;
-    final int repetitions = int.tryParse(_repetitionsController.text) ?? 0;
-    final int pause = int.tryParse(_pauseController.text) ?? 0;
+    // Leggi i valori dagli Slider
+    final int interval = _intervalValue.round();
+    final int repetitions = _repetitionsValue.round();
+    final int pause = _pauseValue.round();
 
     if (interval <= 0 || repetitions <= 0) {
       setState(() {
-        _status = "Inserisci valori validi per intervallo e ripetizioni.";
+        _status = "L'intervallo e le ripetizioni devono essere maggiori di 0.";
       });
       return;
     }
@@ -67,6 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _playSound() async {
     try {
+      // Assicurati che il nome del file sia corretto e che sia nella cartella assets
       await _audioPlayer.play(AssetSource('hotel-bell-334109.mp3'));
       print("Suono riprodotto");
     } catch (e) {
@@ -103,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _stopTimer() {
     _timer?.cancel();
     setState(() {
-      _status = "Timer fermato. Inserisci i valori e premi Start";
+      _status = "Timer fermato. Imposta i valori e premi Start";
       _remainingTime = 0;
       _currentRepetition = 0;
     });
@@ -111,9 +114,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    _intervalController.dispose();
-    _repetitionsController.dispose();
-    _pauseController.dispose();
+    // Rimuovi i dispose dei controller
+    // _intervalController.dispose();
+    // _repetitionsController.dispose();
+    // _pauseController.dispose();
     _timer?.cancel();
     _audioPlayer.dispose();
     super.dispose();
@@ -131,55 +135,70 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            TextField(
-              controller: _intervalController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Intervallo (secondi)',
-                border: OutlineInputBorder(),
-              ),
+            Text('Intervallo: ${_intervalValue.round()} secondi'),
+            Slider(
+              value: _intervalValue,
+              min: 1,
+              max: 180, // Massimo 3 minuti
+              divisions: 179,
+              label: _intervalValue.round().toString(),
+              onChanged: (double value) {
+                setState(() {
+                  _intervalValue = value;
+                });
+              },
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _repetitionsController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Numero di Ripetizioni',
-                border: OutlineInputBorder(),
-              ),
+            const SizedBox(height: 20),
+            Text('Numero di Ripetizioni: ${_repetitionsValue.round()}'),
+            Slider(
+              value: _repetitionsValue,
+              min: 1,
+              max: 50, // Massimo 50 ripetizioni
+              divisions: 49,
+              label: _repetitionsValue.round().toString(),
+              onChanged: (double value) {
+                setState(() {
+                  _repetitionsValue = value;
+                });
+              },
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _pauseController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Pausa tra Ripetizioni (secondi)',
-                border: OutlineInputBorder(),
-              ),
+            const SizedBox(height: 20),
+            Text('Pausa tra Ripetizioni: ${_pauseValue.round()} secondi'),
+            Slider(
+              value: _pauseValue,
+              min: 0, // La pausa può essere 0
+              max: 120, // Massimo 2 minuti di pausa
+              divisions: 120,
+              label: _pauseValue.round().toString(),
+              onChanged: (double value) {
+                setState(() {
+                  _pauseValue = value;
+                });
+              },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 30),
             Text(
               _status,
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
+              children: [
                 ElevatedButton(
                   onPressed: _startTimer,
                   style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white, // Colore del testo
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
                   ),
                   child: const Text('Start'),
                 ),
                 ElevatedButton(
                   onPressed: _stopTimer,
                   style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white, // Colore del testo
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
                   ),
                   child: const Text('Stop'),
                 ),
