@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:numberpicker/numberpicker.dart'; // Importa numberpicker
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -19,15 +20,16 @@ class _MyHomePageState extends State<MyHomePage> {
   int _remainingTime = 0;
   String _status = "Imposta i valori e premi Start";
 
-  double _intervalValue = 30.0; // Valore predefinito per l'intervallo
-  double _repetitionsValue = 5.0; // Valore predefinito per le ripetizioni
-  double _pauseValue = 10.0; // Valore predefinito per la pausa
+  // Valori per i NumberPicker
+  int _intervalValue = 30; // Valore predefinito per l'intervallo in secondi
+  int _repetitionsValue = 5; // Valore predefinito per le ripetizioni
+  int _pauseValue = 10; // Valore predefinito per la pausa in secondi
 
   void _startTimer() {
-    // Leggi i valori dagli Slider
-    final int interval = _intervalValue.round();
-    final int repetitions = _repetitionsValue.round();
-    final int pause = _pauseValue.round();
+    // Leggi i valori dai NumberPicker (già interi)
+    final int interval = _intervalValue;
+    final int repetitions = _repetitionsValue;
+    final int pause = _pauseValue;
 
     if (interval <= 0 || repetitions <= 0) {
       setState(() {
@@ -45,14 +47,16 @@ class _MyHomePageState extends State<MyHomePage> {
       _currentRepetition++;
       _remainingTime = interval;
       setState(() {
-        _status = "Ripetizione $_currentRepetition di $repetitions: $_remainingTime s";
+        _status =
+            "Ripetizione $_currentRepetition di $repetitions\n$_remainingTime s";
       });
       _timer?.cancel(); // Cancella timer precedenti se presenti
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           if (_remainingTime > 0) {
             _remainingTime--;
-            _status = "Ripetizione $_currentRepetition di $repetitions: $_remainingTime s";
+            _status =
+                "Ripetizione $_currentRepetition di $repetitions\n$_remainingTime s";
           } else {
             timer.cancel();
             _playSound();
@@ -69,7 +73,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _playSound() async {
     try {
-      // Assicurati che il nome del file sia corretto e che sia nella cartella assets
       await _audioPlayer.play(AssetSource('hotel-bell-334109.mp3'));
       print("Suono riprodotto");
     } catch (e) {
@@ -106,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _stopTimer() {
     _timer?.cancel();
     setState(() {
-      _status = "Timer fermato. Imposta i valori e premi Start";
+      _status = "Timer fermato.\nImposta i valori e premi Start";
       _remainingTime = 0;
       _currentRepetition = 0;
     });
@@ -114,13 +117,41 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    // Rimuovi i dispose dei controller
-    // _intervalController.dispose();
-    // _repetitionsController.dispose();
-    // _pauseController.dispose();
     _timer?.cancel();
     _audioPlayer.dispose();
     super.dispose();
+  }
+
+  Widget _buildNumberPickerColumn(String label, int currentValue, int minValue,
+      int maxValue, ValueChanged<int> onChanged) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding:
+              const EdgeInsets.all(6.0), // Piccolo padding attorno al border
+          child: NumberPicker(
+            value: currentValue,
+            minValue: minValue,
+            maxValue: maxValue,
+            onChanged: onChanged,
+            itemHeight: 50,
+            itemWidth: 60,
+            axis: Axis.vertical, // o Axis.horizontal
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -133,56 +164,40 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
-            Text('Intervallo: ${_intervalValue.round()} secondi'),
-            Slider(
-              value: _intervalValue,
-              min: 1,
-              max: 180, // Massimo 3 minuti
-              divisions: 179,
-              label: _intervalValue.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  _intervalValue = value;
-                });
-              },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildNumberPickerColumn(
+                  'Intervallo\n(sec)',
+                  _intervalValue,
+                  1, // Minimo 1 secondo
+                  180, // Massimo 3 minuti
+                  (value) => setState(() => _intervalValue = value),
+                ),
+                _buildNumberPickerColumn(
+                  'Ripetizioni\n',
+                  _repetitionsValue,
+                  1, // Minimo 1 ripetizione
+                  50, // Massimo 50 ripetizioni
+                  (value) => setState(() => _repetitionsValue = value),
+                ),
+                _buildNumberPickerColumn(
+                  'Pausa\n(sec)',
+                  _pauseValue,
+                  0, // La pausa può essere 0
+                  120, // Massimo 2 minuti
+                  (value) => setState(() => _pauseValue = value),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text('Numero di Ripetizioni: ${_repetitionsValue.round()}'),
-            Slider(
-              value: _repetitionsValue,
-              min: 1,
-              max: 50, // Massimo 50 ripetizioni
-              divisions: 49,
-              label: _repetitionsValue.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  _repetitionsValue = value;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            Text('Pausa tra Ripetizioni: ${_pauseValue.round()} secondi'),
-            Slider(
-              value: _pauseValue,
-              min: 0, // La pausa può essere 0
-              max: 120, // Massimo 2 minuti di pausa
-              divisions: 120,
-              label: _pauseValue.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  _pauseValue = value;
-                });
-              },
-            ),
-            const SizedBox(height: 30),
             Text(
               _status,
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
