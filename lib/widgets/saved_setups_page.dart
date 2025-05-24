@@ -49,7 +49,7 @@ class _SavedSetupsPageState extends State<SavedSetupsPage> {
                           tooltip: 'Applica Rintocco',
                           onPressed: () {
                             widget.onApplySetup(setup);
-                            Navigator.pop(context, true); // Torna e indica che qualcosa è cambiato
+                            Navigator.pop(context, true); // Torna e indica che un setup è stato applicato
                           },
                         ),
                         IconButton(
@@ -75,13 +75,9 @@ class _SavedSetupsPageState extends State<SavedSetupsPage> {
                                       child: const Text('Elimina', style: TextStyle(color: Colors.red)),
                                       onPressed: () {
                                         widget.onDeleteSetup(setup.id);
-                                        Navigator.of(dialogContext).pop(); // Chiudi il dialogo
-                                        // Non è necessario Navigator.pop(context, true) qui
-                                        // perché la modifica viene già gestita in onDeleteSetup
-                                        // e la lista si aggiornerà automaticamente se la pagina precedente
-                                        // ricarica i dati basandosi sul risultato della navigazione.
-                                        // Tuttavia, per forzare un rebuild immediato della lista in questa pagina:
-                                        setState(() {}); // Ricarica la lista in questa pagina
+                                        Navigator.of(dialogContext).pop(); // Chiudi dialogo conferma
+                                        // setState(() {}); // Non serve qui, la home page ricaricherà
+                                        Navigator.pop(context, true); // Torna e indica che la lista è cambiata
                                       },
                                     ),
                                   ],
@@ -94,7 +90,7 @@ class _SavedSetupsPageState extends State<SavedSetupsPage> {
                     ),
                     onTap: () {
                        widget.onApplySetup(setup);
-                       Navigator.pop(context, true);
+                       Navigator.pop(context, true); // Torna e indica che un setup è stato applicato
                     },
                   ),
                 );
